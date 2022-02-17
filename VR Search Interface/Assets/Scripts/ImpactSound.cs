@@ -123,7 +123,6 @@ public class ImpactSound : MonoBehaviour
             page.LoadImage(Convert.FromBase64String(inBase64));
 
             GetComponent<Renderer>().material.mainTexture = page;
-            
         }
         else
             Debug.Log($"Failed: {www.error}");
