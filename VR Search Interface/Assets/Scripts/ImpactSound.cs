@@ -56,6 +56,7 @@ public class ImpactSound : MonoBehaviour
         location = new Vector3(x,y,z);
         keywordRecognizer = new KeywordRecognizer(words.Keys.ToArray(),ConfidenceLevel.Low);
         keywordRecognizer.OnPhraseRecognized += RecognizedSpeech;
+        TestQuery();
     }
 
     private void Update()
@@ -86,6 +87,32 @@ public class ImpactSound : MonoBehaviour
             }
         }
         
+    }
+
+    public async void TestQuery()
+    {
+        searchQuery = "hello world";
+        DownloadPDF ();
+    }
+
+    public async void DownloadPDF()
+    {
+        var identifier = "186632692.pdf";
+        //var request = "https://api.core.ac.uk/v3/outputs/" + identifier + "/download" + "&api_key=78xrymX61Td4MEwGhRFjSL9uDcnIUbWH";
+        var request = "https://core.ac.uk//download//186632692.pdf";
+        using var www = UnityWebRequest.Get(request);
+        www.SetRequestHeader("Content-Type", "application/pdf");
+        var operation = www.SendWebRequest();
+        while (!operation.isDone)
+        {
+            await Task.Yield();
+        }
+        if (www.result == UnityWebRequest.Result.Success)
+        {
+            Debug.Log($"Success: {www.downloadHandler.text}");
+        }
+        else
+            Debug.Log($"Failed: {www.error}");
     }
 
     [ContextMenu("Test Get")]
