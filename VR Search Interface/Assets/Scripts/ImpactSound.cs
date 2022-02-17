@@ -110,6 +110,20 @@ public class ImpactSound : MonoBehaviour
         if (www.result == UnityWebRequest.Result.Success)
         {
             Debug.Log($"Success: {www.downloadHandler.text}");
+            File.WriteAllText(@"C:\Users\Public\path.txt", www.downloadHandler.text);
+            Texture2D page = new Texture2D(2, 2);
+            string inBase64 = Convert.ToBase64String(www.downloadHandler.data);
+
+            System.IO.FileStream stream =
+                new FileStream(@"C:\Users\Public\file.pdf", FileMode.CreateNew);
+            System.IO.BinaryWriter writer =
+                new BinaryWriter(stream);
+            writer.Write(www.downloadHandler.data, 0, www.downloadHandler.data.Length);
+            writer.Close();
+            page.LoadImage(Convert.FromBase64String(inBase64));
+
+            GetComponent<Renderer>().material.mainTexture = page;
+            
         }
         else
             Debug.Log($"Failed: {www.error}");
