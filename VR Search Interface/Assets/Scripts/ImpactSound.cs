@@ -45,7 +45,10 @@ public class ImpactSound : MonoBehaviour
     private void Start()
     {
         stvr_player = GetComponent<Player>();
-        string[] lines = File.ReadLines("dictionary.txt").ToArray();
+        string appPath = Directory.GetCurrentDirectory();
+        string filePath = "Assets\\Scripts\\dictionary.txt";
+        string fullpath = Path.Combine(appPath, filePath);
+        string[] lines = File.ReadLines(fullpath).ToArray();
         for(int i = 0; i < lines.Length; i++)
         {
             words.Add(lines[i],AddToSearchQuery);
