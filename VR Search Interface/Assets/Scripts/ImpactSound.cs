@@ -45,13 +45,11 @@ public class ImpactSound : MonoBehaviour
     private void Start()
     {
         stvr_player = GetComponent<Player>();
-        words.Add("hello", AddToSearchQuery);
-        words.Add("world", AddToSearchQuery);
-        words.Add("car", AddToSearchQuery);
-        words.Add("train", AddToSearchQuery);
-        words.Add("art", AddToSearchQuery);
-        words.Add("security", AddToSearchQuery);
-        words.Add("website", AddToSearchQuery);
+        string[] lines = File.ReadLines("dictionary.txt").ToArray();
+        for(int i = 0; i < lines.Length; i++)
+        {
+            words.Add(lines[i],AddToSearchQuery);
+        }
         location = new Vector3(x,y,z);
         keywordRecognizer = new KeywordRecognizer(words.Keys.ToArray(),ConfidenceLevel.Low);
         keywordRecognizer.OnPhraseRecognized += RecognizedSpeech;
