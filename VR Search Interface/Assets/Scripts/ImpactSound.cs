@@ -134,8 +134,9 @@ public class ImpactSound : MonoBehaviour
         String[] fileLocations = new String[3];
         for(int i = 0; i < 3; i++)
         {
-            DownloadPDF(ExtractIdentifier(searchResult.results[i].downloadUrl));
-            fileLocations[i] = searchResult.results[i].downloadUrl;
+            String identifier = ExtractIdentifier(searchResult.results[i].downloadUrl);
+            DownloadPDF(identifier);
+            fileLocations[i] = @"C:\Users\Public\"+ identifier +".txt";
         }
         //populate shelf with RetrievedData
         String title = searchResult.results[0].title;
@@ -212,7 +213,6 @@ public class ImpactSound : MonoBehaviour
         String identifier;
         if (downloadUrl.Contains("/download/pdf/"))
         {
-            Debug.Log("PDF");
             identifier = downloadUrl.Substring(32);
         }
         else if ((downloadUrl.Contains("//download//")))
@@ -223,6 +223,7 @@ public class ImpactSound : MonoBehaviour
         {
             identifier = downloadUrl.Substring(28);
         }
+        identifier = identifier.Substring(0,identifier.Length - 4);
         Debug.Log("Extracted Identifier: " + identifier);
         return identifier;
     }
