@@ -80,7 +80,7 @@ public class ImpactSound : MonoBehaviour
                 {
                     CollectSound.Play();
                     engaged = false;
-                    ExecuteQuery();
+                    MakeQuery();
                     ClearSearch();
                     keywordRecognizer.Stop();
                 }
@@ -91,49 +91,19 @@ public class ImpactSound : MonoBehaviour
 
     public async void TestQuery()
     {
-        searchQuery = "hello world";
-        DownloadPDF ();
-    }
-
-    public async void DownloadPDF()
-    {
-        var identifier = "186632692.pdf";
-        //var request = "https://api.core.ac.uk/v3/outputs/" + identifier + "/download" + "&api_key=78xrymX61Td4MEwGhRFjSL9uDcnIUbWH";
-        var request = "https://core.ac.uk//download//186632692.pdf";
-        using var www = UnityWebRequest.Get(request);
-        www.SetRequestHeader("Content-Type", "application/pdf");
-        var operation = www.SendWebRequest();
-        while (!operation.isDone)
-        {
-            await Task.Yield();
-        }
-        if (www.result == UnityWebRequest.Result.Success)
-        {
-            Debug.Log($"Success: {www.downloadHandler.text}");
-            File.WriteAllText(@"C:\Users\Public\path.txt", www.downloadHandler.text);
-            Texture2D page = new Texture2D(2, 2);
-            string inBase64 = Convert.ToBase64String(www.downloadHandler.data);
-
-            System.IO.FileStream stream =
-                new FileStream(@"C:\Users\Public\file.pdf", FileMode.CreateNew);
-            System.IO.BinaryWriter writer =
-                new BinaryWriter(stream);
-            writer.Write(www.downloadHandler.data, 0, www.downloadHandler.data.Length);
-            writer.Close();
-            page.LoadImage(Convert.FromBase64String(inBase64));
-
-            GetComponent<Renderer>().material.mainTexture = page;
-        }
-        else
-            Debug.Log($"Failed: {www.error}");
+        DownloadPDF("46713218");
+        ExecuteQuery("Hello World");
     }
 
     [ContextMenu("Test Get")]
-    public async void ExecuteQuery()
+    public async void MakeQuery()
+    {
+        ExecuteQuery(searchQuery.Remove(searchQuery.Length - 1));
+    }
+
+    public async void ExecuteQuery(String searchQuery)
     {
         var url = "https://api.core.ac.uk/v3/search/works/";
-        //searchQuery = searchQuery.Replace(" ", "+");
-        searchQuery = searchQuery.Remove(searchQuery.Length - 1);
         var request = url + "?q=" + searchQuery + "&api_key=78xrymX61Td4MEwGhRFjSL9uDcnIUbWH";
         Debug.Log(request);
         using var www = UnityWebRequest.Get(request);
@@ -150,19 +120,40 @@ public class ImpactSound : MonoBehaviour
             Debug.Log($"Success: {www.downloadHandler.text}");
             File.WriteAllText(@"C:\Users\Public\path.txt", www.downloadHandler.text);
             SearchResponse searchResult = JsonConvert.DeserializeObject<SearchResponse>(www.downloadHandler.text);
-            PopulateShelfAsync(searchResult);
+            ExtractIdentifier(searchResult.results[0].downloadUrl);
+            await PopulateShelfAsync(searchResult);
             CreateShelf();
         }
         else
             Debug.Log($"Failed: {www.error}");
+
     }
 
     async Task PopulateShelfAsync(SearchResponse searchResult)
     {
-        //var ID = searchResult.results[0].id;
-        var ID = "148922778";
-        var request = "https://api.core.ac.uk/v3/works/" + ID + "/download?api_key=78xrymX61Td4MEwGhRFjSL9uDcnIUbWH";
+        String[] fileLocations = new String[3];
+        for(int i = 0; i < 3; i++)
+        {
+            DownloadPDF(ExtractIdentifier(searchResult.results[i].downloadUrl));
+            fileLocations[i] = searchResult.results[i].downloadUrl;
+        }
+        //populate shelf with RetrievedData
+        String title = searchResult.results[0].title;
+        BookCover.text = title;
+        title = searchResult.results[1].title;
+        BookCover2.text = title;
+        title = searchResult.results[2].title;
+        BookCover3.text = title;
+    }
+
+    public async void DownloadPDF(String identifier)
+    {
+        //var identifier = "186632692.pdf";
+        //var request = "https://api.core.ac.uk/v3/outputs/" + identifier + "/download" + "&api_key=78xrymX61Td4MEwGhRFjSL9uDcnIUbWH";
+        //var request = "https://core.ac.uk//download//" + identifier + ".pdf";
+        var request = "https://core.ac.uk//download//" + identifier + ".pdf";
         using var www = UnityWebRequest.Get(request);
+        www.SetRequestHeader("Content-Type", "application/pdf");
         var operation = www.SendWebRequest();
         while (!operation.isDone)
         {
@@ -171,16 +162,20 @@ public class ImpactSound : MonoBehaviour
         if (www.result == UnityWebRequest.Result.Success)
         {
             Debug.Log($"Success: {www.downloadHandler.text}");
+            Texture2D page = new Texture2D(2, 2);
+            string inBase64 = Convert.ToBase64String(www.downloadHandler.data);
+            System.IO.FileStream stream =
+                new FileStream(@"C:\Users\Public\" + ExtractIdentifier(request) + ".pdf", FileMode.CreateNew);
+            System.IO.BinaryWriter writer =
+                new BinaryWriter(stream);
+            writer.Write(www.downloadHandler.data, 0, www.downloadHandler.data.Length);
+            writer.Close();
+            page.LoadImage(Convert.FromBase64String(inBase64));
+
+            GetComponent<Renderer>().material.mainTexture = page;
         }
         else
             Debug.Log($"Failed: {www.error}");
-        //populate shelf with RetrievedData
-        String title = searchResult.results[0].title;
-        BookCover.text = title;
-        title = searchResult.results[1].title;
-        BookCover2.text = title;
-        title = searchResult.results[2].title;
-        BookCover3.text = title;
     }
 
     private void RecognizedSpeech(PhraseRecognizedEventArgs speech)
@@ -211,6 +206,27 @@ public class ImpactSound : MonoBehaviour
         }
     }
 
+    String ExtractIdentifier(String downloadUrl)
+    {
+        Debug.Log("Download URL: " + downloadUrl);
+        String identifier;
+        if (downloadUrl.Contains("/download/pdf/"))
+        {
+            Debug.Log("PDF");
+            identifier = downloadUrl.Substring(32);
+        }
+        else if ((downloadUrl.Contains("//download//")))
+        {
+            identifier = downloadUrl.Substring(30);
+        }
+        else
+        {
+            identifier = downloadUrl.Substring(28);
+        }
+        Debug.Log("Extracted Identifier: " + identifier);
+        return identifier;
+    }
+
     void ToggleEngaged()
     {
         engaged = !engaged;
@@ -219,19 +235,6 @@ public class ImpactSound : MonoBehaviour
     void CreateShelf()
     {
         Instantiate(shelf, location, Quaternion.identity);
-        /*if (alternate)
-        {
-            x -= 5; //CHANGED THIS
-            location = new Vector3(x, y, z);
-            alternate = !alternate;
-        }
-        else
-        {
-            z -= 5;
-            location = new Vector3(x, y, z);
-            z += 5;
-            alternate = !alternate;
-        }*/
     }
 
 }
