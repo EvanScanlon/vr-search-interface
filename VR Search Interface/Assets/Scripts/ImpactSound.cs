@@ -11,10 +11,12 @@ using System.IO;
 using Valve.Newtonsoft.Json;
 using Valve.VR;
 using Valve.VR.InteractionSystem;
+using Ghostscript.NET;
+using System.Diagnostics;
 
 public class ImpactSound : MonoBehaviour
 {
-    
+
     public AudioSource CollectSound;
     //Shelf and book variables
     public GameObject shelf;
@@ -49,13 +51,15 @@ public class ImpactSound : MonoBehaviour
         string filePath = "Assets\\Scripts\\dictionary.txt";
         string fullpath = Path.Combine(appPath, filePath);
         string[] lines = File.ReadLines(fullpath).ToArray();
-        for(int i = 0; i < lines.Length; i++)
+        for (int i = 0; i < lines.Length; i++)
         {
-            words.Add(lines[i],AddToSearchQuery);
+            words.Add(lines[i], AddToSearchQuery);
         }
-        location = new Vector3(x,y,z);
-        keywordRecognizer = new KeywordRecognizer(words.Keys.ToArray(),ConfidenceLevel.Low);
+        location = new Vector3(x, y, z);
+        keywordRecognizer = new KeywordRecognizer(words.Keys.ToArray(), ConfidenceLevel.Low);
         keywordRecognizer.OnPhraseRecognized += RecognizedSpeech;
+        PDFtoImage();
+        PdfToJpg(@"C:\Users\Public\46713218.pdf", @"C:\Users\Public\46713218.jpg");
         TestQuery();
     }
 
@@ -86,13 +90,31 @@ public class ImpactSound : MonoBehaviour
                 }
             }
         }
-        
+
     }
 
     public async void TestQuery()
     {
         DownloadPDF("46713218");
         ExecuteQuery("Hello World");
+    }
+
+    public void PDFtoImage()
+    {
+ 
+    }
+
+    private void PdfToJpg(string inputPDFFile, string outputImagesPath)
+    {
+        string ghostScriptPath = @"C:\Program Files (x86)\gs\gs9.55.0\bin\gswin32.exe";
+        String ars = "-dNOPAUSE -sDEVICE=jpeg -r102.4 -o" + outputImagesPath + "%d.jpg -sPAPERSIZE=a4 " + inputPDFFile;
+        Process proc = new Process();
+        proc.StartInfo.FileName = ghostScriptPath;
+        proc.StartInfo.Arguments = ars;
+        proc.StartInfo.CreateNoWindow = true;
+        proc.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
+        proc.Start();
+        proc.WaitForExit();
     }
 
     [ContextMenu("Test Get")]
@@ -105,7 +127,7 @@ public class ImpactSound : MonoBehaviour
     {
         var url = "https://api.core.ac.uk/v3/search/works/";
         var request = url + "?q=" + searchQuery + "&api_key=78xrymX61Td4MEwGhRFjSL9uDcnIUbWH";
-        Debug.Log(request);
+        UnityEngine.Debug.Log(request);
         using var www = UnityWebRequest.Get(request);
         //using var www = UnityWebRequest.Get("https://api.core.ac.uk/#operation/null/v3/labs/outputs/dedup");
         www.SetRequestHeader("Content-Type", "application/json");
@@ -117,7 +139,7 @@ public class ImpactSound : MonoBehaviour
         }
         if (www.result == UnityWebRequest.Result.Success)
         {
-            Debug.Log($"Success: {www.downloadHandler.text}");
+            UnityEngine.Debug.Log($"Success: {www.downloadHandler.text}");
             File.WriteAllText(@"C:\Users\Public\path.txt", www.downloadHandler.text);
             SearchResponse searchResult = JsonConvert.DeserializeObject<SearchResponse>(www.downloadHandler.text);
             ExtractIdentifier(searchResult.results[0].downloadUrl);
@@ -125,18 +147,18 @@ public class ImpactSound : MonoBehaviour
             CreateShelf();
         }
         else
-            Debug.Log($"Failed: {www.error}");
+            UnityEngine.Debug.Log($"Failed: {www.error}");
 
     }
 
     async Task PopulateShelfAsync(SearchResponse searchResult)
     {
         String[] fileLocations = new String[3];
-        for(int i = 0; i < 3; i++)
+        for (int i = 0; i < 3; i++)
         {
             String identifier = ExtractIdentifier(searchResult.results[i].downloadUrl);
             DownloadPDF(identifier);
-            fileLocations[i] = @"C:\Users\Public\"+ identifier +".txt";
+            PDFtoImage(@"C:\Users\Public\" + identifier + ".pdf", identifier);
         }
         //populate shelf with RetrievedData
         String title = searchResult.results[0].title;
@@ -162,7 +184,7 @@ public class ImpactSound : MonoBehaviour
         }
         if (www.result == UnityWebRequest.Result.Success)
         {
-            Debug.Log($"Success: {www.downloadHandler.text}");
+            UnityEngine.Debug.Log($"Success: {www.downloadHandler.text}");
             Texture2D page = new Texture2D(2, 2);
             string inBase64 = Convert.ToBase64String(www.downloadHandler.data);
             System.IO.FileStream stream =
@@ -171,25 +193,28 @@ public class ImpactSound : MonoBehaviour
                 new BinaryWriter(stream);
             writer.Write(www.downloadHandler.data, 0, www.downloadHandler.data.Length);
             writer.Close();
-            page.LoadImage(Convert.FromBase64String(inBase64));
-
-            GetComponent<Renderer>().material.mainTexture = page;
         }
         else
-            Debug.Log($"Failed: {www.error}");
+            UnityEngine.Debug.Log($"Failed: {www.error}");
+    }
+
+    void PDFtoImage(String FilePath, String identifier)
+    {
+        string DestinationFolder = @"C:\Users\Public\";
+
     }
 
     private void RecognizedSpeech(PhraseRecognizedEventArgs speech)
     {
         currentWord = speech.text;
-        Debug.Log(speech.text);
+        UnityEngine.Debug.Log(speech.text);
         words[speech.text].Invoke();
     }
 
     private void AddToSearchQuery()
     {
         searchQuery += currentWord + " ";
-        Debug.Log("Current search query: " +searchQuery);
+        UnityEngine.Debug.Log("Current search query: " + searchQuery);
     }
 
     private void ClearSearch()
@@ -209,7 +234,7 @@ public class ImpactSound : MonoBehaviour
 
     String ExtractIdentifier(String downloadUrl)
     {
-        Debug.Log("Download URL: " + downloadUrl);
+        UnityEngine.Debug.Log("Download URL: " + downloadUrl);
         String identifier;
         if (downloadUrl.Contains("/download/pdf/"))
         {
@@ -223,8 +248,8 @@ public class ImpactSound : MonoBehaviour
         {
             identifier = downloadUrl.Substring(28);
         }
-        identifier = identifier.Substring(0,identifier.Length - 4);
-        Debug.Log("Extracted Identifier: " + identifier);
+        identifier = identifier.Substring(0, identifier.Length - 4);
+        UnityEngine.Debug.Log("Extracted Identifier: " + identifier);
         return identifier;
     }
 
