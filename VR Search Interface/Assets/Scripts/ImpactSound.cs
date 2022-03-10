@@ -11,13 +11,11 @@ using System.IO;
 using Valve.Newtonsoft.Json;
 using Valve.VR;
 using Valve.VR.InteractionSystem;
-using Ghostscript.NET;
 using System.Diagnostics;
 using Debug = UnityEngine.Debug;
 
 public class ImpactSound : MonoBehaviour
 {
-
     public AudioSource CollectSound;
     //Shelf and book variables
     public GameObject shelf;
@@ -44,7 +42,6 @@ public class ImpactSound : MonoBehaviour
     Player stvr_player;
     private KeywordRecognizer keywordRecognizer;
     private Dictionary<string, Action> words = new Dictionary<string, Action>();
-    String[] files = new String[3];
 
     private void Start()
     {
@@ -60,7 +57,7 @@ public class ImpactSound : MonoBehaviour
         location = new Vector3(x, y, z);
         keywordRecognizer = new KeywordRecognizer(words.Keys.ToArray(), ConfidenceLevel.Low);
         keywordRecognizer.OnPhraseRecognized += RecognizedSpeech;
-        TestQuery();
+        //TestQuery();
         ExecuteQuery("Hello World");
     }
 
@@ -105,7 +102,6 @@ public class ImpactSound : MonoBehaviour
         {
             Debug.Log("File not found");
         }
-        //ExecuteQuery("Hello World");
     }
 
     private void PdfToJpg(string inputPDFFile, string outputImagesPath)
