@@ -13,6 +13,7 @@ using Valve.VR;
 using Valve.VR.InteractionSystem;
 using Ghostscript.NET;
 using System.Diagnostics;
+using Debug = UnityEngine.Debug;
 
 public class ImpactSound : MonoBehaviour
 {
@@ -43,6 +44,7 @@ public class ImpactSound : MonoBehaviour
     Player stvr_player;
     private KeywordRecognizer keywordRecognizer;
     private Dictionary<string, Action> words = new Dictionary<string, Action>();
+    String[] files = new String[3];
 
     private void Start()
     {
@@ -58,9 +60,8 @@ public class ImpactSound : MonoBehaviour
         location = new Vector3(x, y, z);
         keywordRecognizer = new KeywordRecognizer(words.Keys.ToArray(), ConfidenceLevel.Low);
         keywordRecognizer.OnPhraseRecognized += RecognizedSpeech;
-        PDFtoImage();
-        PdfToJpg(@"C:\Users\Public\46713218.pdf", @"C:\Users\Public\46713218.jpg");
         TestQuery();
+        ExecuteQuery("Hello World");
     }
 
     private void Update()
@@ -95,26 +96,34 @@ public class ImpactSound : MonoBehaviour
 
     public async void TestQuery()
     {
-        DownloadPDF("46713218");
-        ExecuteQuery("Hello World");
-    }
-
-    public void PDFtoImage()
-    {
- 
+        await DownloadPDF("46713218");
+        if ((File.Exists(@"C:\Users\Public\46713218.pdf")))
+            {
+            PdfToJpg(@"C:\Users\Public\46713218.pdf", @"C:\Users\Public\46713218.jpg");
+            }
+        else
+        {
+            Debug.Log("File not found");
+        }
+        //ExecuteQuery("Hello World");
     }
 
     private void PdfToJpg(string inputPDFFile, string outputImagesPath)
     {
-        string ghostScriptPath = @"C:\Program Files (x86)\gs\gs9.55.0\bin\gswin32.exe";
-        String ars = "-dNOPAUSE -sDEVICE=jpeg -r102.4 -o" + outputImagesPath + "%d.jpg -sPAPERSIZE=a4 " + inputPDFFile;
-        Process proc = new Process();
-        proc.StartInfo.FileName = ghostScriptPath;
-        proc.StartInfo.Arguments = ars;
-        proc.StartInfo.CreateNoWindow = true;
-        proc.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
-        proc.Start();
-        proc.WaitForExit();
+        if ((!File.Exists(inputPDFFile))) Debug.Log("File not found! " + inputPDFFile);
+        else
+        {
+            Debug.Log("File found!");
+            string ghostScriptPath = @"C:\Program Files (x86)\gs\gs9.55.0\bin\gswin32.exe";
+            String ars = "-dNOPAUSE -sDEVICE=jpeg -r102.4 -o" + outputImagesPath + "%d.jpg -sPAPERSIZE=a4 " + inputPDFFile;
+            Process proc = new Process();
+            proc.StartInfo.FileName = ghostScriptPath;
+            proc.StartInfo.Arguments = ars;
+            proc.StartInfo.CreateNoWindow = true;
+            proc.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
+            proc.Start();
+            proc.WaitForExit();
+        }
     }
 
     [ContextMenu("Test Get")]
@@ -140,10 +149,11 @@ public class ImpactSound : MonoBehaviour
         if (www.result == UnityWebRequest.Result.Success)
         {
             UnityEngine.Debug.Log($"Success: {www.downloadHandler.text}");
-            File.WriteAllText(@"C:\Users\Public\path.txt", www.downloadHandler.text);
+            //File.WriteAllText(@"C:\Users\Public\path.txt", www.downloadHandler.text);
             SearchResponse searchResult = JsonConvert.DeserializeObject<SearchResponse>(www.downloadHandler.text);
-            ExtractIdentifier(searchResult.results[0].downloadUrl);
+            //ExtractIdentifier(searchResult.results[0].downloadUrl);
             await PopulateShelfAsync(searchResult);
+
             CreateShelf();
         }
         else
@@ -157,10 +167,19 @@ public class ImpactSound : MonoBehaviour
         for (int i = 0; i < 3; i++)
         {
             String identifier = ExtractIdentifier(searchResult.results[i].downloadUrl);
-            DownloadPDF(identifier);
-            PDFtoImage(@"C:\Users\Public\" + identifier + ".pdf", identifier);
+            await DownloadPDF(identifier);
+            fileLocations[i] = @"C:\Users\Public\" + ExtractIdentifier(searchResult.results[i].downloadUrl) + ".pdf";
+            //PdfToJpg(@"C:\Users\Public\" + identifier + ".pdf", @"C:\Users\Public\" + identifier + ".jpg");
         }
+
+        for (int i = 0; i < 3; i++)
+        {
+            String identifier = ExtractIdentifier(searchResult.results[i].downloadUrl);
+            PdfToJpg(@"C:\Users\Public\" + identifier + ".pdf", @"C:\Users\Public\" + identifier + ".jpg");
+        }
+
         //populate shelf with RetrievedData
+        //TO BE REPLACED WITH JPG TEXTURES
         String title = searchResult.results[0].title;
         BookCover.text = title;
         title = searchResult.results[1].title;
@@ -169,7 +188,7 @@ public class ImpactSound : MonoBehaviour
         BookCover3.text = title;
     }
 
-    public async void DownloadPDF(String identifier)
+    public async Task DownloadPDF(String identifier)
     {
         //var identifier = "186632692.pdf";
         //var request = "https://api.core.ac.uk/v3/outputs/" + identifier + "/download" + "&api_key=78xrymX61Td4MEwGhRFjSL9uDcnIUbWH";
@@ -196,12 +215,6 @@ public class ImpactSound : MonoBehaviour
         }
         else
             UnityEngine.Debug.Log($"Failed: {www.error}");
-    }
-
-    void PDFtoImage(String FilePath, String identifier)
-    {
-        string DestinationFolder = @"C:\Users\Public\";
-
     }
 
     private void RecognizedSpeech(PhraseRecognizedEventArgs speech)
