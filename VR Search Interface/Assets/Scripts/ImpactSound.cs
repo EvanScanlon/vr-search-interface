@@ -13,6 +13,7 @@ using Valve.VR;
 using Valve.VR.InteractionSystem;
 using System.Diagnostics;
 using Debug = UnityEngine.Debug;
+using UnityEngine.UI;
 
 public class ImpactSound : MonoBehaviour
 {
@@ -20,9 +21,9 @@ public class ImpactSound : MonoBehaviour
     //Shelf and book variables
     public GameObject shelf;
     public TMP_Text Bubble;
-    public TMP_Text BookCover;
-    public TMP_Text BookCover2;
-    public TMP_Text BookCover3;
+    public RawImage image1;
+    public RawImage image2;
+    public RawImage image3;
     public Vector3 location;
     public float x = 0.0f;
     public float y = 7.62f;
@@ -93,11 +94,13 @@ public class ImpactSound : MonoBehaviour
 
     public async void TestQuery()
     {
-        await DownloadPDF("46713218");
+        //await DownloadPDF("46713218");
         if ((File.Exists(@"C:\Users\Public\46713218.pdf")))
             {
             PdfToJpg(@"C:\Users\Public\46713218.pdf", @"C:\Users\Public\46713218.jpg");
-            }
+            image1.texture = LoadJPG(@"C:\Users\Public\46713218.jpg1.jpg");
+            CreateShelf();
+        }
         else
         {
             Debug.Log("File not found");
@@ -148,7 +151,7 @@ public class ImpactSound : MonoBehaviour
             //File.WriteAllText(@"C:\Users\Public\path.txt", www.downloadHandler.text);
             SearchResponse searchResult = JsonConvert.DeserializeObject<SearchResponse>(www.downloadHandler.text);
             //ExtractIdentifier(searchResult.results[0].downloadUrl);
-            await PopulateShelfAsync(searchResult);
+            await HandleSearchResultsAsync(searchResult);
 
             CreateShelf();
         }
@@ -157,31 +160,50 @@ public class ImpactSound : MonoBehaviour
 
     }
 
-    async Task PopulateShelfAsync(SearchResponse searchResult)
+    async Task HandleSearchResultsAsync(SearchResponse searchResult)
     {
-        String[] fileLocations = new String[3];
+        Texture2D[] textures = null;
         for (int i = 0; i < 3; i++)
         {
             String identifier = ExtractIdentifier(searchResult.results[i].downloadUrl);
-            await DownloadPDF(identifier);
-            fileLocations[i] = @"C:\Users\Public\" + ExtractIdentifier(searchResult.results[i].downloadUrl) + ".pdf";
-            //PdfToJpg(@"C:\Users\Public\" + identifier + ".pdf", @"C:\Users\Public\" + identifier + ".jpg");
+            await DownloadPDF(identifier); 
+            PdfToJpg(@"C:\Users\Public\" + identifier + ".pdf", @"C:\Users\Public\" + identifier + ".jpg");
+            if(i == 0)image1.texture = LoadJPG(@"C:\Users\Public\" + identifier + @".jpg1.jpg");
+            if (i == 1) image2.texture = LoadJPG(@"C:\Users\Public\" + identifier + @".jpg1.jpg");
+            if (i == 2) image3.texture = LoadJPG(@"C:\Users\Public\" + identifier + @".jpg1.jpg");
         }
 
-        for (int i = 0; i < 3; i++)
+        /*for (int i = 0; i < 3; i++)
         {
             String identifier = ExtractIdentifier(searchResult.results[i].downloadUrl);
             PdfToJpg(@"C:\Users\Public\" + identifier + ".pdf", @"C:\Users\Public\" + identifier + ".jpg");
-        }
+        }*/
 
         //populate shelf with RetrievedData
         //TO BE REPLACED WITH JPG TEXTURES
-        String title = searchResult.results[0].title;
-        BookCover.text = title;
-        title = searchResult.results[1].title;
-        BookCover2.text = title;
-        title = searchResult.results[2].title;
-        BookCover3.text = title;
+        //image1.texture = textures[0];
+        //image2.texture = textures[1];
+        //image3.texture = textures[2];
+    }
+
+    public static Texture2D LoadJPG(string filePath)
+    {
+
+        Texture2D tex = null;
+        byte[] fileData;
+
+        if (File.Exists(filePath))
+        {
+            Debug.Log(filePath + " found!");
+            fileData = File.ReadAllBytes(filePath);
+            tex = new Texture2D(2, 2);
+            tex.LoadImage(fileData); //..this will auto-resize the texture dimensions.
+        }
+        else
+        {
+            Debug.Log(filePath + " not found!");
+        }
+        return tex;
     }
 
     public async Task DownloadPDF(String identifier)
@@ -202,12 +224,14 @@ public class ImpactSound : MonoBehaviour
             UnityEngine.Debug.Log($"Success: {www.downloadHandler.text}");
             Texture2D page = new Texture2D(2, 2);
             string inBase64 = Convert.ToBase64String(www.downloadHandler.data);
-            System.IO.FileStream stream =
-                new FileStream(@"C:\Users\Public\" + ExtractIdentifier(request) + ".pdf", FileMode.CreateNew);
-            System.IO.BinaryWriter writer =
+            if (!File.Exists(@"C:\Users\Public\" + ExtractIdentifier(request) + ".pdf"))
+            {
+                System.IO.FileStream stream = new FileStream(@"C:\Users\Public\" + ExtractIdentifier(request) + ".pdf", FileMode.CreateNew);
+                System.IO.BinaryWriter writer =
                 new BinaryWriter(stream);
-            writer.Write(www.downloadHandler.data, 0, www.downloadHandler.data.Length);
-            writer.Close();
+                writer.Write(www.downloadHandler.data, 0, www.downloadHandler.data.Length);
+                writer.Close();
+            }
         }
         else
             UnityEngine.Debug.Log($"Failed: {www.error}");
