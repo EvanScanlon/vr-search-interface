@@ -164,8 +164,8 @@ public class ImpactSound : MonoBehaviour
     {
         GameObject searchResults = Instantiate(shelf, location, Quaternion.identity);
         searchResults.transform.GetChild(0).name = ExtractIdentifier(searchResult.results[0].downloadUrl);
-        searchResults.transform.GetChild(0).name = ExtractIdentifier(searchResult.results[1].downloadUrl);
-        searchResults.transform.GetChild(0).name = ExtractIdentifier(searchResult.results[2].downloadUrl);
+        searchResults.transform.GetChild(1).name = ExtractIdentifier(searchResult.results[1].downloadUrl);
+        searchResults.transform.GetChild(2).name = ExtractIdentifier(searchResult.results[2].downloadUrl);
     }
 
     async Task HandleSearchResultsAsync(SearchResponse searchResult)

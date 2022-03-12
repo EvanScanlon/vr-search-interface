@@ -8,10 +8,12 @@ using Valve.VR.InteractionSystem;
 public class Preview : MonoBehaviour
 {
     public RawImage image;
-    public GameObject shelf;
     public Throwable throwable;
-    public Rigidbody body;
     public int pageNumber = 1;
+    [SerializeField]
+    SteamVR_Action_Boolean stvr_right;
+    [SerializeField]
+    SteamVR_Action_Boolean stvr_left;
     // Start is called before the first frame update
     void Start()
     {
@@ -23,11 +25,11 @@ public class Preview : MonoBehaviour
     {
         if (throwable.interactable.attachedToHand != null)
         {
-            if (Input.GetKeyDown(KeyCode.RightArrow))
+            if (stvr_right.stateDown)
             {
                 flipPage("right");
             }
-            if (Input.GetKeyDown(KeyCode.LeftArrow))
+            if (stvr_left.stateDown)
             {
                 flipPage("left");
             }
