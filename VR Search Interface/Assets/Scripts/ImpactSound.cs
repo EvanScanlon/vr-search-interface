@@ -43,6 +43,7 @@ public class ImpactSound : MonoBehaviour
     Player stvr_player;
     private KeywordRecognizer keywordRecognizer;
     private Dictionary<string, Action> words = new Dictionary<string, Action>();
+    public Throwable throwable;
 
     private void Start()
     {
@@ -60,6 +61,7 @@ public class ImpactSound : MonoBehaviour
         keywordRecognizer.OnPhraseRecognized += RecognizedSpeech;
         //TestQuery();
         ExecuteQuery("Hello World");
+        //CreateShelf();
     }
 
     private void Update()
@@ -89,7 +91,6 @@ public class ImpactSound : MonoBehaviour
                 }
             }
         }
-
     }
 
     public async void TestQuery()
@@ -99,7 +100,7 @@ public class ImpactSound : MonoBehaviour
             {
             PdfToJpg(@"C:\Users\Public\46713218.pdf", @"C:\Users\Public\46713218.jpg");
             image1.texture = LoadJPG(@"C:\Users\Public\46713218.jpg1.jpg");
-            CreateShelf();
+            //CreateShelf();
         }
         else
         {
@@ -153,11 +154,18 @@ public class ImpactSound : MonoBehaviour
             //ExtractIdentifier(searchResult.results[0].downloadUrl);
             await HandleSearchResultsAsync(searchResult);
 
-            CreateShelf();
+            CreateShelf(searchResult);
         }
         else
             UnityEngine.Debug.Log($"Failed: {www.error}");
 
+    }
+    void CreateShelf(SearchResponse searchResult)
+    {
+        GameObject searchResults = Instantiate(shelf, location, Quaternion.identity);
+        searchResults.transform.GetChild(0).name = ExtractIdentifier(searchResult.results[0].downloadUrl);
+        searchResults.transform.GetChild(0).name = ExtractIdentifier(searchResult.results[1].downloadUrl);
+        searchResults.transform.GetChild(0).name = ExtractIdentifier(searchResult.results[2].downloadUrl);
     }
 
     async Task HandleSearchResultsAsync(SearchResponse searchResult)
@@ -289,11 +297,6 @@ public class ImpactSound : MonoBehaviour
     void ToggleEngaged()
     {
         engaged = !engaged;
-    }
-
-    void CreateShelf()
-    {
-        Instantiate(shelf, location, Quaternion.identity);
     }
 
 }
