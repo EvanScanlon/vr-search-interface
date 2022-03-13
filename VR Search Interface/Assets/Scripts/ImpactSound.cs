@@ -115,7 +115,7 @@ public class ImpactSound : MonoBehaviour
         {
             Debug.Log("File found!");
             string ghostScriptPath = @"C:\Program Files (x86)\gs\gs9.55.0\bin\gswin32.exe";
-            String ars = "-dNOPAUSE -sDEVICE=jpeg -r102.4 -o" + outputImagesPath + "%d.jpg -sPAPERSIZE=a4 " + inputPDFFile;
+            String ars = "-dNOPAUSE -sDEVICE=jpeg -r200 -o" + outputImagesPath + "%d.jpg -sPAPERSIZE=a4 " + inputPDFFile;
             Process proc = new Process();
             proc.StartInfo.FileName = ghostScriptPath;
             proc.StartInfo.Arguments = ars;
@@ -180,18 +180,6 @@ public class ImpactSound : MonoBehaviour
             if (i == 1) image2.texture = LoadJPG(@"C:\Users\Public\" + identifier + @".jpg1.jpg");
             if (i == 2) image3.texture = LoadJPG(@"C:\Users\Public\" + identifier + @".jpg1.jpg");
         }
-
-        /*for (int i = 0; i < 3; i++)
-        {
-            String identifier = ExtractIdentifier(searchResult.results[i].downloadUrl);
-            PdfToJpg(@"C:\Users\Public\" + identifier + ".pdf", @"C:\Users\Public\" + identifier + ".jpg");
-        }*/
-
-        //populate shelf with RetrievedData
-        //TO BE REPLACED WITH JPG TEXTURES
-        //image1.texture = textures[0];
-        //image2.texture = textures[1];
-        //image3.texture = textures[2];
     }
 
     public static Texture2D LoadJPG(string filePath)

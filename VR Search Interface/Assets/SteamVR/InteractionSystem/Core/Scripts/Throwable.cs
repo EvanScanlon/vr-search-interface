@@ -53,6 +53,12 @@ namespace Valve.VR.InteractionSystem
         public UnityEvent onDetachFromHand;
         public HandEvent onHeldUpdate;
 
+        [SerializeField]
+        SteamVR_Action_Boolean stvr_action;
+        //Controller tracking data (position, velocity, ...)
+        [SerializeField]
+        SteamVR_Action_Pose stvr_controller_pose;
+        private SteamVR_Input_Sources in_source_buffer;
 
         protected RigidbodyInterpolation hadInterpolation = RigidbodyInterpolation.None;
 
@@ -60,6 +66,10 @@ namespace Valve.VR.InteractionSystem
 
         [HideInInspector]
         public Interactable interactable;
+
+        //Attached SteamVR Player Component Components
+        [SerializeField]
+        Player stvr_player;
 
 
         //-------------------------------------------------
@@ -247,6 +257,11 @@ namespace Valve.VR.InteractionSystem
 
             if (onHeldUpdate != null)
                 onHeldUpdate.Invoke(hand);
+
+            if (stvr_action[in_source_buffer].stateDown)
+            {
+                Debug.Log("Pressed!");
+            }
         }
 
 

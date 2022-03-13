@@ -55,6 +55,15 @@
       "requirement": "suggested"
     },
     {
+      "name": "/actions/default/in/SwipeEast",
+      "type": "boolean",
+      "requirement": "suggested"
+    },
+    {
+      "name": "/actions/default/in/SwipeWest",
+      "type": "boolean"
+    },
+    {
       "name": "/actions/default/out/Haptic",
       "type": "vibration"
     },
