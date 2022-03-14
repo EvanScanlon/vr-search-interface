@@ -18,7 +18,7 @@ public class Preview : MonoBehaviour
     SteamVR_Action_Boolean stvr_left;
     [SerializeField]
     SteamVR_Action_Boolean stvr_grip;
-
+    public ImpactSound controller;
     public GameObject paper;
     public GameObject instantiatedPaper;
     public Vector3 location;

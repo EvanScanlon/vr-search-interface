@@ -20,6 +20,7 @@ public class ImpactSound : MonoBehaviour
     public AudioSource CollectSound;
     //Shelf and book variables
     public GameObject shelf;
+    public GameObject bell;
     public TMP_Text Bubble;
     public RawImage image1;
     public RawImage image2;
@@ -44,6 +45,9 @@ public class ImpactSound : MonoBehaviour
     private KeywordRecognizer keywordRecognizer;
     private Dictionary<string, Action> words = new Dictionary<string, Action>();
     public Throwable throwable;
+    public SearchResponse latestSearch;
+    int modifier = 0;
+    public bool withinArea = true;
 
     private void Start()
     {
@@ -70,25 +74,37 @@ public class ImpactSound : MonoBehaviour
         {
             Bubble.text = searchQuery + "?";
         }
-        if (stvr_grip.stateDown && engaged)
+        if (stvr_grip.stateDown && engaged && withinArea)
         {
             timer = Time.time;
-        }
-        else if (stvr_grip.state && engaged)
+        }  
+        else if (stvr_grip.state && engaged && withinArea)
         {
             if (Time.time - timer > holdDur)
             {
                 //by making it positive inf, we won't subsequently run this code by accident,
                 //since X - +inf = -inf, which is always less than holdDur
                 timer = float.PositiveInfinity;
-                if (searchQuery != "")
+               if (searchQuery != "")
                 {
                     CollectSound.Play();
                     engaged = false;
-                    MakeQuery();
-                    ClearSearch();
+                    Bubble.text = "Searching...";
                     keywordRecognizer.Stop();
+                    MakeQuery();
                 }
+            }
+        }
+        if (stvr_grip.stateDown && engaged==false && Bubble.text == "Need more results?" && withinArea)
+        {
+            timer = Time.time;
+        }
+        else if (stvr_grip.state && engaged == false && Bubble.text == "Need more results?" && withinArea)
+        {
+            if (Time.time - timer > holdDur)
+            {
+                timer = float.PositiveInfinity;
+                MoreResultsAsync();
             }
         }
     }
@@ -151,10 +167,12 @@ public class ImpactSound : MonoBehaviour
             UnityEngine.Debug.Log($"Success: {www.downloadHandler.text}");
             //File.WriteAllText(@"C:\Users\Public\path.txt", www.downloadHandler.text);
             SearchResponse searchResult = JsonConvert.DeserializeObject<SearchResponse>(www.downloadHandler.text);
+            latestSearch = searchResult;
             //ExtractIdentifier(searchResult.results[0].downloadUrl);
             await HandleSearchResultsAsync(searchResult);
 
             CreateShelf(searchResult);
+            Bubble.text = "Need more results?";
         }
         else
             UnityEngine.Debug.Log($"Failed: {www.error}");
@@ -168,6 +186,14 @@ public class ImpactSound : MonoBehaviour
         searchResults.transform.GetChild(2).name = ExtractIdentifier(searchResult.results[2].downloadUrl);
     }
 
+    void CreateShelf(SearchResponse searchResult, int modifier)
+    {
+        GameObject searchResults = Instantiate(shelf, location, Quaternion.identity);
+        searchResults.transform.GetChild(0).name = ExtractIdentifier(searchResult.results[modifier].downloadUrl);
+        searchResults.transform.GetChild(1).name = ExtractIdentifier(searchResult.results[modifier+1].downloadUrl);
+        searchResults.transform.GetChild(2).name = ExtractIdentifier(searchResult.results[modifier+2].downloadUrl);
+    }
+
     async Task HandleSearchResultsAsync(SearchResponse searchResult)
     {
         Texture2D[] textures = null;
@@ -179,6 +205,21 @@ public class ImpactSound : MonoBehaviour
             if(i == 0)image1.texture = LoadJPG(@"C:\Users\Public\" + identifier + @".jpg1.jpg");
             if (i == 1) image2.texture = LoadJPG(@"C:\Users\Public\" + identifier + @".jpg1.jpg");
             if (i == 2) image3.texture = LoadJPG(@"C:\Users\Public\" + identifier + @".jpg1.jpg");
+        }
+    }
+
+    async Task HandleSearchResultsAsync(SearchResponse searchResult, int modifier)
+    {
+        Texture2D[] textures = null;
+        int start = modifier;
+        for (int i = modifier; i < start+3; i++)
+        {
+            String identifier = ExtractIdentifier(searchResult.results[i].downloadUrl);
+            if (!File.Exists(@"C:\Users\Public\" + identifier + ".pdf")) await DownloadPDF(identifier);
+            PdfToJpg(@"C:\Users\Public\" + identifier + ".pdf", @"C:\Users\Public\" + identifier + ".jpg");
+            if (i == modifier) image1.texture = LoadJPG(@"C:\Users\Public\" + identifier + @".jpg1.jpg");
+            if (i == modifier + 1) image2.texture = LoadJPG(@"C:\Users\Public\" + identifier + @".jpg1.jpg");
+            if (i == modifier + 2) image3.texture = LoadJPG(@"C:\Users\Public\" + identifier + @".jpg1.jpg");
         }
     }
 
@@ -251,13 +292,30 @@ public class ImpactSound : MonoBehaviour
         searchQuery = "";
     }
 
+    public async Task MoreResultsAsync()
+    {
+        modifier += 3;
+        CollectSound.Play();
+        Bubble.text = "Searching...";
+        await HandleSearchResultsAsync(latestSearch,modifier);
+        CreateShelf(latestSearch,modifier);
+        Bubble.text = "Need more results?";
+    }
+
     void OnTriggerEnter(Collider other)
     {
-        if (other.tag == "Player")
+        if (other.tag == "Player" && engaged == false)
         {
+            modifier = 0;
             CollectSound.Play();
             engaged = true;
+            ClearSearch();
             keywordRecognizer.Start();
+        }
+        else if (other.tag == "Player" && engaged && searchQuery != "")
+        {
+            CollectSound.Play();
+            ClearSearch();
         }
     }
 
@@ -287,5 +345,15 @@ public class ImpactSound : MonoBehaviour
         engaged = !engaged;
     }
 
+
+    public void withinAreaTrue()
+    {
+        withinArea = true;
+    }
+
+    public void withinAreaFalse()
+    {
+        withinArea = false;
+    }
 }
 
