@@ -7,17 +7,28 @@ using Valve.VR;
 using Valve.VR.InteractionSystem;
 public class Preview : MonoBehaviour
 {
+    public AudioSource CollectSound;
     public RawImage image;
+    public RawImage printedImage;
     public Throwable throwable;
     public int pageNumber = 1;
     [SerializeField]
     SteamVR_Action_Boolean stvr_right;
     [SerializeField]
     SteamVR_Action_Boolean stvr_left;
+    [SerializeField]
+    SteamVR_Action_Boolean stvr_grip;
+
+    public GameObject paper;
+    public GameObject instantiatedPaper;
+    public Vector3 location;
+    public float x = -1.0243f;
+    public float y = 1.1222f;
+    public float z = 0.2877f;
     // Start is called before the first frame update
     void Start()
     {
-        
+        location = new Vector3(x, y, z);
     }
 
     // Update is called once per frame
@@ -32,6 +43,11 @@ public class Preview : MonoBehaviour
             if (stvr_left.stateDown)
             {
                 flipPage("left");
+            }
+            if (stvr_grip.stateDown)
+            {
+                CollectSound.Play();
+                PrintImage(throwable.interactable.name);
             }
         }
     }
@@ -76,6 +92,14 @@ public class Preview : MonoBehaviour
             Debug.Log(filePath + " not found!");
         }
         return tex;
+    }
+
+    void PrintImage(string name)
+    {
+        printedImage.texture = image.texture;
+        instantiatedPaper = Instantiate(paper,location,Quaternion.identity);
+        instantiatedPaper.transform.Rotate(75.0f, 0.0f, 0.0f, Space.Self);
+        Debug.Log("Image printed at: " + instantiatedPaper.transform.position);
     }
 
 }

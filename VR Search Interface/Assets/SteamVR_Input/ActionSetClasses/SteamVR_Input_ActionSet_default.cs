@@ -113,11 +113,11 @@ namespace Valve.VR
             }
         }
         
-        public virtual SteamVR_Action_Boolean SwipeEast
+        public virtual SteamVR_Action_Boolean grip
         {
             get
             {
-                return SteamVR_Actions.default_SwipeEast;
+                return SteamVR_Actions.default_grip;
             }
         }
         

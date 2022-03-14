@@ -55,7 +55,7 @@
       "requirement": "suggested"
     },
     {
-      "name": "/actions/default/in/SwipeEast",
+      "name": "/actions/default/in/grip",
       "type": "boolean",
       "requirement": "suggested"
     },

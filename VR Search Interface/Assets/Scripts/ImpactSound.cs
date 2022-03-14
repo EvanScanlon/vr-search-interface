@@ -174,7 +174,7 @@ public class ImpactSound : MonoBehaviour
         for (int i = 0; i < 3; i++)
         {
             String identifier = ExtractIdentifier(searchResult.results[i].downloadUrl);
-            await DownloadPDF(identifier); 
+            if(!File.Exists(@"C:\Users\Public\" + identifier + ".pdf")) await DownloadPDF(identifier); 
             PdfToJpg(@"C:\Users\Public\" + identifier + ".pdf", @"C:\Users\Public\" + identifier + ".jpg");
             if(i == 0)image1.texture = LoadJPG(@"C:\Users\Public\" + identifier + @".jpg1.jpg");
             if (i == 1) image2.texture = LoadJPG(@"C:\Users\Public\" + identifier + @".jpg1.jpg");
