@@ -129,6 +129,14 @@ namespace Valve.VR
             }
         }
         
+        public virtual SteamVR_Action_Boolean South
+        {
+            get
+            {
+                return SteamVR_Actions.default_South;
+            }
+        }
+        
         public virtual SteamVR_Action_Vibration Haptic
         {
             get

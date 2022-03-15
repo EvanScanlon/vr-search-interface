@@ -5,12 +5,15 @@ using UnityEngine;
 using UnityEngine.UI;
 using Valve.VR;
 using Valve.VR.InteractionSystem;
+using TMPro;
 public class Preview : MonoBehaviour
 {
     public AudioSource CollectSound;
     public RawImage image;
     public RawImage printedImage;
     public Throwable throwable;
+    [SerializeField]
+    Collider collider;
     public int pageNumber = 1;
     [SerializeField]
     SteamVR_Action_Boolean stvr_right;
@@ -18,6 +21,8 @@ public class Preview : MonoBehaviour
     SteamVR_Action_Boolean stvr_left;
     [SerializeField]
     SteamVR_Action_Boolean stvr_grip;
+    [SerializeField]
+    SteamVR_Action_Boolean stvr_south;
     public ImpactSound controller;
     public GameObject paper;
     public GameObject instantiatedPaper;
@@ -25,6 +30,10 @@ public class Preview : MonoBehaviour
     public float x = -1.0243f;
     public float y = 1.1222f;
     public float z = 0.2877f;
+
+    public TMP_Text Documents;
+    public TMP_Text Pictures;
+
     // Start is called before the first frame update
     void Start()
     {
@@ -48,6 +57,11 @@ public class Preview : MonoBehaviour
             {
                 CollectSound.Play();
                 PrintImage(throwable.interactable.name);
+            }
+            if (stvr_south.stateDown)
+            {
+                //Send object to shelf
+                Debug.Log("down");
             }
         }
     }
@@ -99,7 +113,16 @@ public class Preview : MonoBehaviour
         printedImage.texture = image.texture;
         instantiatedPaper = Instantiate(paper,location,Quaternion.identity);
         instantiatedPaper.transform.Rotate(75.0f, 0.0f, 0.0f, Space.Self);
-        Debug.Log("Image printed at: " + instantiatedPaper.transform.position);
+        //Debug.Log("Image printed at: " + instantiatedPaper.transform.position);
     }
 
-}
+    void OnCollisionEnter(Collision collision)
+    {
+        if (collision.gameObject.tag == "ALLOW_MANIPULATION")
+        {
+            Physics.IgnoreCollision(collision.collider, collider);
+            Debug.Log("Collision ignored between "+collision.collider.name+" and "+collider.name);
+        }
+
+    }
+    }

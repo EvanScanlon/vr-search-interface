@@ -64,6 +64,10 @@
       "type": "boolean"
     },
     {
+      "name": "/actions/default/in/South",
+      "type": "boolean"
+    },
+    {
       "name": "/actions/default/out/Haptic",
       "type": "vibration"
     },

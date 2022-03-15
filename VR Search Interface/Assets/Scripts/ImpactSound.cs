@@ -95,7 +95,7 @@ public class ImpactSound : MonoBehaviour
                 }
             }
         }
-        if (stvr_grip.stateDown && engaged==false && Bubble.text == "Need more results?" && withinArea)
+        /*if (stvr_grip.stateDown && engaged==false && Bubble.text == "Need more results?" && withinArea)
         {
             timer = Time.time;
         }
@@ -106,7 +106,7 @@ public class ImpactSound : MonoBehaviour
                 timer = float.PositiveInfinity;
                 MoreResultsAsync();
             }
-        }
+        }*/
     }
 
     public async void TestQuery()
@@ -172,7 +172,7 @@ public class ImpactSound : MonoBehaviour
             await HandleSearchResultsAsync(searchResult);
 
             CreateShelf(searchResult);
-            Bubble.text = "Need more results?";
+            Bubble.text = "Search again?";
         }
         else
             UnityEngine.Debug.Log($"Failed: {www.error}");
@@ -296,9 +296,11 @@ public class ImpactSound : MonoBehaviour
     {
         modifier += 3;
         CollectSound.Play();
+        engaged = true;
         Bubble.text = "Searching...";
         await HandleSearchResultsAsync(latestSearch,modifier);
         CreateShelf(latestSearch,modifier);
+        engaged = false;
         Bubble.text = "Need more results?";
     }
 
@@ -352,6 +354,11 @@ public class ImpactSound : MonoBehaviour
     }
 
     public void withinAreaFalse()
+    {
+        withinArea = false;
+    }
+
+    public void withinAreaFalse(Hand hand)
     {
         withinArea = false;
     }
