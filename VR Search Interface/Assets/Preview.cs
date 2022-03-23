@@ -113,7 +113,6 @@ public class Preview : MonoBehaviour
         printedImage.texture = image.texture;
         instantiatedPaper = Instantiate(paper,location,Quaternion.identity);
         instantiatedPaper.transform.Rotate(75.0f, 0.0f, 0.0f, Space.Self);
-        //Debug.Log("Image printed at: " + instantiatedPaper.transform.position);
     }
 
     void OnCollisionEnter(Collision collision)

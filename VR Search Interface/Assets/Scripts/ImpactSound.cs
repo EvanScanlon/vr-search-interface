@@ -18,6 +18,7 @@ using UnityEngine.UI;
 public class ImpactSound : MonoBehaviour
 {
     public AudioSource CollectSound;
+
     //Shelf and book variables
     public GameObject shelf;
     public GameObject bell;
@@ -64,8 +65,6 @@ public class ImpactSound : MonoBehaviour
         keywordRecognizer = new KeywordRecognizer(words.Keys.ToArray(), ConfidenceLevel.Low);
         keywordRecognizer.OnPhraseRecognized += RecognizedSpeech;
         //TestQuery();
-        ExecuteQuery("Hello World");
-        //CreateShelf();
     }
 
     private void Update()
@@ -74,11 +73,11 @@ public class ImpactSound : MonoBehaviour
         {
             Bubble.text = searchQuery + "?";
         }
-        if (stvr_grip.stateDown && engaged && withinArea)
+        if (stvr_grip.stateDown && engaged)
         {
             timer = Time.time;
         }  
-        else if (stvr_grip.state && engaged && withinArea)
+        else if (stvr_grip.state && engaged)
         {
             if (Time.time - timer > holdDur)
             {
@@ -95,33 +94,11 @@ public class ImpactSound : MonoBehaviour
                 }
             }
         }
-        /*if (stvr_grip.stateDown && engaged==false && Bubble.text == "Need more results?" && withinArea)
-        {
-            timer = Time.time;
-        }
-        else if (stvr_grip.state && engaged == false && Bubble.text == "Need more results?" && withinArea)
-        {
-            if (Time.time - timer > holdDur)
-            {
-                timer = float.PositiveInfinity;
-                MoreResultsAsync();
-            }
-        }*/
     }
 
     public async void TestQuery()
     {
-        //await DownloadPDF("46713218");
-        if ((File.Exists(@"C:\Users\Public\46713218.pdf")))
-            {
-            PdfToJpg(@"C:\Users\Public\46713218.pdf", @"C:\Users\Public\46713218.jpg");
-            image1.texture = LoadJPG(@"C:\Users\Public\46713218.jpg1.jpg");
-            //CreateShelf();
-        }
-        else
-        {
-            Debug.Log("File not found");
-        }
+        ExecuteQuery("Hello World");
     }
 
     private void PdfToJpg(string inputPDFFile, string outputImagesPath)
@@ -130,7 +107,10 @@ public class ImpactSound : MonoBehaviour
         else
         {
             Debug.Log("File found!");
+            Directory.SetCurrentDirectory(AppDomain.CurrentDomain.BaseDirectory);
             string ghostScriptPath = @"C:\Program Files (x86)\gs\gs9.55.0\bin\gswin32.exe";
+            Debug.Log(ghostScriptPath);
+            //string ghostScriptPath = @"gs\gs9.55.0\bin\gswin32.exe";
             String ars = "-dNOPAUSE -sDEVICE=jpeg -r200 -o" + outputImagesPath + "%d.jpg -sPAPERSIZE=a4 " + inputPDFFile;
             Process proc = new Process();
             proc.StartInfo.FileName = ghostScriptPath;
@@ -154,9 +134,7 @@ public class ImpactSound : MonoBehaviour
         var request = url + "?q=" + searchQuery + "&api_key=78xrymX61Td4MEwGhRFjSL9uDcnIUbWH";
         UnityEngine.Debug.Log(request);
         using var www = UnityWebRequest.Get(request);
-        //using var www = UnityWebRequest.Get("https://api.core.ac.uk/#operation/null/v3/labs/outputs/dedup");
         www.SetRequestHeader("Content-Type", "application/json");
-        //www.SetRequestHeader("Authorization", "Bearer " + API_KEY);
         var operation = www.SendWebRequest();
         while (!operation.isDone)
         {
@@ -165,10 +143,9 @@ public class ImpactSound : MonoBehaviour
         if (www.result == UnityWebRequest.Result.Success)
         {
             UnityEngine.Debug.Log($"Success: {www.downloadHandler.text}");
-            //File.WriteAllText(@"C:\Users\Public\path.txt", www.downloadHandler.text);
+            File.WriteAllText(@"C:\Users\Public\path.txt", www.downloadHandler.text);
             SearchResponse searchResult = JsonConvert.DeserializeObject<SearchResponse>(www.downloadHandler.text);
             latestSearch = searchResult;
-            //ExtractIdentifier(searchResult.results[0].downloadUrl);
             await HandleSearchResultsAsync(searchResult);
 
             CreateShelf(searchResult);
@@ -196,7 +173,6 @@ public class ImpactSound : MonoBehaviour
 
     async Task HandleSearchResultsAsync(SearchResponse searchResult)
     {
-        Texture2D[] textures = null;
         for (int i = 0; i < 3; i++)
         {
             String identifier = ExtractIdentifier(searchResult.results[i].downloadUrl);
@@ -205,21 +181,6 @@ public class ImpactSound : MonoBehaviour
             if(i == 0)image1.texture = LoadJPG(@"C:\Users\Public\" + identifier + @".jpg1.jpg");
             if (i == 1) image2.texture = LoadJPG(@"C:\Users\Public\" + identifier + @".jpg1.jpg");
             if (i == 2) image3.texture = LoadJPG(@"C:\Users\Public\" + identifier + @".jpg1.jpg");
-        }
-    }
-
-    async Task HandleSearchResultsAsync(SearchResponse searchResult, int modifier)
-    {
-        Texture2D[] textures = null;
-        int start = modifier;
-        for (int i = modifier; i < start+3; i++)
-        {
-            String identifier = ExtractIdentifier(searchResult.results[i].downloadUrl);
-            if (!File.Exists(@"C:\Users\Public\" + identifier + ".pdf")) await DownloadPDF(identifier);
-            PdfToJpg(@"C:\Users\Public\" + identifier + ".pdf", @"C:\Users\Public\" + identifier + ".jpg");
-            if (i == modifier) image1.texture = LoadJPG(@"C:\Users\Public\" + identifier + @".jpg1.jpg");
-            if (i == modifier + 1) image2.texture = LoadJPG(@"C:\Users\Public\" + identifier + @".jpg1.jpg");
-            if (i == modifier + 2) image3.texture = LoadJPG(@"C:\Users\Public\" + identifier + @".jpg1.jpg");
         }
     }
 
@@ -292,18 +253,6 @@ public class ImpactSound : MonoBehaviour
         searchQuery = "";
     }
 
-    public async Task MoreResultsAsync()
-    {
-        modifier += 3;
-        CollectSound.Play();
-        engaged = true;
-        Bubble.text = "Searching...";
-        await HandleSearchResultsAsync(latestSearch,modifier);
-        CreateShelf(latestSearch,modifier);
-        engaged = false;
-        Bubble.text = "Need more results?";
-    }
-
     void OnTriggerEnter(Collider other)
     {
         if (other.tag == "Player" && engaged == false)
@@ -342,25 +291,5 @@ public class ImpactSound : MonoBehaviour
         return identifier;
     }
 
-    void ToggleEngaged()
-    {
-        engaged = !engaged;
-    }
-
-
-    public void withinAreaTrue()
-    {
-        withinArea = true;
-    }
-
-    public void withinAreaFalse()
-    {
-        withinArea = false;
-    }
-
-    public void withinAreaFalse(Hand hand)
-    {
-        withinArea = false;
-    }
 }
 
