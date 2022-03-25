@@ -3,7 +3,7 @@
   * Follow this link: https://www.ghostscript.com/releases/gsdnld.html
   * Install version 9.55.0, 32bit Windows.
   * Ensure it is installed to this directory : "C:\Program Files (x86)\gs\gs9.55.0\bin\gswin32.exe"
-2. Import .unitypackage file into Unity
+2. Import .unitypackage file into Unity version 2020.3.1.19f1
 
 * To make a search, approach the desk and ring the bell. Speak your query (tap the bell again to clear your query if you wish to change it)
 * Once happy, give a thumbs up gesture by holding the trigger on the controller for 3 seconds.
